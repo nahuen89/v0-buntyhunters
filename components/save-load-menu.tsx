@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useGame } from "@/contexts/game-context"
@@ -17,7 +18,18 @@ import {
 
 export default function SaveLoadMenu() {
   const router = useRouter()
-  const { hasSavedGame, loadGame, clearSave, gameData } = useGame()
+  const { loadGame, clearSave, gameData } = useGame()
+  const [hasSavedGame, setHasSavedGame] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Check for saved game on client side only
+    if (typeof window !== "undefined") {
+      const savedData = localStorage.getItem("tactics-game-save")
+      setHasSavedGame(!!savedData)
+      setIsLoading(false)
+    }
+  }, [])
 
   const handleNewGame = () => {
     router.push("/world-map")
@@ -30,6 +42,17 @@ export default function SaveLoadMenu() {
 
   const handleClearSave = () => {
     clearSave()
+    setHasSavedGame(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center">
+        <Button disabled className="bg-gray-600 px-8 py-6 text-lg">
+          Loading...
+        </Button>
+      </div>
+    )
   }
 
   return (

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect } from "react"
+import { createContext, useContext, useCallback } from "react"
 import type { Character, GameSave } from "@/types/game-types"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import { GameDataManager } from "@/lib/game-data-manager"
@@ -21,74 +21,62 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined)
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  const [gameData, setGameData, clearGameData] = useLocalStorage<GameSave>(
-    "tactics-game-save",
-    GameDataManager.getDefaultGameSave(),
-  )
+  const defaultGameSave = GameDataManager.getDefaultGameSave()
+
+  const [gameData, setGameData, clearGameData] = useLocalStorage<GameSave>("tactics-game-save", defaultGameSave)
 
   const [characters, setCharacters] = useLocalStorage<Character[]>(
     "tactics-game-characters",
-    GameDataManager.getDefaultGameSave().characters,
+    defaultGameSave.characters,
   )
 
-  // Auto-save when game data changes
-  useEffect(() => {
-    if (gameData) {
-      GameDataManager.saveGame(gameData)
-    }
-  }, [gameData])
-
-  // Auto-save when characters change
-  useEffect(() => {
-    if (characters) {
-      GameDataManager.saveCharacters(characters)
-      // Also update characters in game data
+  const updateGameData = useCallback(
+    (updates: Partial<GameSave>) => {
       setGameData((prev) => ({
         ...prev,
-        characters: characters,
+        ...updates,
+        lastSaved: new Date().toISOString(),
       }))
-    }
-  }, [characters, setGameData])
+    },
+    [setGameData],
+  )
 
-  const updateGameData = (updates: Partial<GameSave>) => {
-    setGameData((prev) => ({
-      ...prev,
-      ...updates,
-      lastSaved: new Date().toISOString(),
-    }))
-  }
+  const updateCharacters = useCallback(
+    (newCharacters: Character[]) => {
+      setCharacters(newCharacters)
+    },
+    [setCharacters],
+  )
 
-  const updateCharacters = (newCharacters: Character[]) => {
-    setCharacters(newCharacters)
-  }
+  const updateCharacter = useCallback(
+    (characterId: string, updates: Partial<Character>) => {
+      setCharacters((prev) => prev.map((char) => (char.id === characterId ? { ...char, ...updates } : char)))
+    },
+    [setCharacters],
+  )
 
-  const updateCharacter = (characterId: string, updates: Partial<Character>) => {
-    setCharacters((prev) => prev.map((char) => (char.id === characterId ? { ...char, ...updates } : char)))
-  }
-
-  const saveGame = () => {
+  const saveGame = useCallback(() => {
     const currentGameData = {
       ...gameData,
       characters: characters,
       lastSaved: new Date().toISOString(),
     }
     setGameData(currentGameData)
-    GameDataManager.saveGame(currentGameData)
-  }
+  }, [gameData, characters, setGameData])
 
-  const loadGame = () => {
+  const loadGame = useCallback(() => {
     const savedGame = GameDataManager.loadGame()
     if (savedGame) {
       setGameData(savedGame)
       setCharacters(savedGame.characters)
     }
-  }
+  }, [setGameData, setCharacters])
 
-  const clearSave = () => {
+  const clearSave = useCallback(() => {
     clearGameData()
-    setCharacters(GameDataManager.getDefaultGameSave().characters)
+    setCharacters(defaultGameSave.characters)
     GameDataManager.clearSave()
-  }
+  }, [clearGameData, setCharacters, defaultGameSave.characters])
 
   const hasSavedGame = GameDataManager.hasSavedGame()
 

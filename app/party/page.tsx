@@ -1,8 +1,6 @@
 "use client"
 
-import React from "react"
-
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -18,14 +16,36 @@ export default function PartyPage() {
   const [activeTab, setActiveTab] = useState("stats")
 
   // Update selected character when characters change
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedCharacter) {
       const updatedCharacter = characters.find((c) => c.id === selectedCharacter.id)
       if (updatedCharacter) {
         setSelectedCharacter(updatedCharacter)
       }
+    } else if (characters.length > 0) {
+      setSelectedCharacter(characters[0])
     }
   }, [characters, selectedCharacter])
+
+  const handleCharacterUpdate = useCallback(
+    (updates: any) => {
+      if (selectedCharacter) {
+        updateCharacter(selectedCharacter.id, updates)
+      }
+    },
+    [selectedCharacter, updateCharacter],
+  )
+
+  if (!selectedCharacter && characters.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-amber-400 mb-4">No Characters Available</h1>
+          <Button onClick={() => router.push("/world-map")}>Return to Map</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
@@ -180,10 +200,7 @@ export default function PartyPage() {
                   </TabsContent>
 
                   <TabsContent value="behaviors" className="mt-4">
-                    <BehaviorEditor
-                      character={selectedCharacter}
-                      onUpdate={(updatedCharacter) => updateCharacter(selectedCharacter.id, updatedCharacter)}
-                    />
+                    <BehaviorEditor character={selectedCharacter} onUpdate={handleCharacterUpdate} />
                   </TabsContent>
                 </Tabs>
               </>
