@@ -1,18 +1,31 @@
 "use client"
 
+import React from "react"
+
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { characters } from "@/lib/game-data"
+import { useGame } from "@/contexts/game-context"
 import CharacterCard from "@/components/character-card"
 import BehaviorEditor from "@/components/behavior-editor"
 
 export default function PartyPage() {
   const router = useRouter()
+  const { characters, updateCharacter } = useGame()
   const [selectedCharacter, setSelectedCharacter] = useState(characters[0])
   const [activeTab, setActiveTab] = useState("stats")
+
+  // Update selected character when characters change
+  React.useEffect(() => {
+    if (selectedCharacter) {
+      const updatedCharacter = characters.find((c) => c.id === selectedCharacter.id)
+      if (updatedCharacter) {
+        setSelectedCharacter(updatedCharacter)
+      }
+    }
+  }, [characters, selectedCharacter])
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
@@ -167,7 +180,10 @@ export default function PartyPage() {
                   </TabsContent>
 
                   <TabsContent value="behaviors" className="mt-4">
-                    <BehaviorEditor character={selectedCharacter} />
+                    <BehaviorEditor
+                      character={selectedCharacter}
+                      onUpdate={(updatedCharacter) => updateCharacter(selectedCharacter.id, updatedCharacter)}
+                    />
                   </TabsContent>
                 </Tabs>
               </>

@@ -7,29 +7,19 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { behaviorTypes, conditions, targets } from "@/lib/game-data"
+import type { Character, Behavior } from "@/types/game-types"
 
 interface BehaviorEditorProps {
-  character: {
-    id: string
-    name: string
-    behaviors: Array<{
-      id: string
-      name: string
-      type: string
-      condition: string
-      target: string
-      priority: number
-      isActive: boolean
-    }>
-  }
+  character: Character
+  onUpdate: (updates: Partial<Character>) => void
 }
 
-export default function BehaviorEditor({ character }: BehaviorEditorProps) {
+export default function BehaviorEditor({ character, onUpdate }: BehaviorEditorProps) {
   const [behaviors, setBehaviors] = useState(character.behaviors)
-  const [editingBehavior, setEditingBehavior] = useState(null)
+  const [editingBehavior, setEditingBehavior] = useState<Behavior | null>(null)
 
   const handleAddBehavior = () => {
-    const newBehavior = {
+    const newBehavior: Behavior = {
       id: `behavior-${Date.now()}`,
       name: "New Behavior",
       type: "attack",
@@ -39,34 +29,43 @@ export default function BehaviorEditor({ character }: BehaviorEditorProps) {
       isActive: true,
     }
 
-    setBehaviors([...behaviors, newBehavior])
+    const updatedBehaviors = [...behaviors, newBehavior]
+    setBehaviors(updatedBehaviors)
     setEditingBehavior(newBehavior)
+    onUpdate({ behaviors: updatedBehaviors })
   }
 
   const handleSaveBehavior = () => {
     if (!editingBehavior) return
 
-    setBehaviors(behaviors.map((b) => (b.id === editingBehavior.id ? editingBehavior : b)))
-
+    const updatedBehaviors = behaviors.map((b) => (b.id === editingBehavior.id ? editingBehavior : b))
+    setBehaviors(updatedBehaviors)
     setEditingBehavior(null)
+    onUpdate({ behaviors: updatedBehaviors })
   }
 
-  const handleDeleteBehavior = (id) => {
-    setBehaviors(behaviors.filter((b) => b.id !== id))
+  const handleDeleteBehavior = (id: string) => {
+    const updatedBehaviors = behaviors.filter((b) => b.id !== id)
+    setBehaviors(updatedBehaviors)
     if (editingBehavior?.id === id) {
       setEditingBehavior(null)
     }
+    onUpdate({ behaviors: updatedBehaviors })
   }
 
-  const handleToggleBehavior = (id, isActive) => {
-    setBehaviors(behaviors.map((b) => (b.id === id ? { ...b, isActive } : b)))
+  const handleToggleBehavior = (id: string, isActive: boolean) => {
+    const updatedBehaviors = behaviors.map((b) => (b.id === id ? { ...b, isActive } : b))
+    setBehaviors(updatedBehaviors)
+    onUpdate({ behaviors: updatedBehaviors })
   }
 
-  const updateEditingBehavior = (field, value) => {
-    setEditingBehavior({
-      ...editingBehavior,
-      [field]: value,
-    })
+  const updateEditingBehavior = (field: keyof Behavior, value: any) => {
+    if (editingBehavior) {
+      setEditingBehavior({
+        ...editingBehavior,
+        [field]: value,
+      })
+    }
   }
 
   return (

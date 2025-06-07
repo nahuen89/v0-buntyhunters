@@ -1,5 +1,4 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import SaveLoadMenu from "@/components/save-load-menu"
 
 export default function HomePage() {
   return (
@@ -24,19 +23,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/world-map">
-            <Button className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-6 text-lg">New Game</Button>
-          </Link>
-          <Link href="/load-game">
-            <Button
-              variant="outline"
-              className="border-amber-600 text-amber-400 hover:bg-amber-900/30 px-8 py-6 text-lg"
-            >
-              Load Game
-            </Button>
-          </Link>
-        </div>
+        <SaveLoadMenu />
       </div>
     </div>
   )
